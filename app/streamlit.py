@@ -6,7 +6,8 @@ from datetime import datetime
 # -------------------------
 # CONFIG
 # -------------------------
-BASE_URL = "http://127.0.0.1:8000/message"
+BASE_URL = "https://honeypot-detection-agent-production.up.railway.app/message"
+# BASE_URL = "http://127.0.0.1:8000/message"
 API_KEY = "dev-secret-key"
 
 
