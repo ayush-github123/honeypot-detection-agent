@@ -1,5 +1,5 @@
 from fastapi import Header, HTTPException
-from config import settings
+from app.config import settings
 
 
 
