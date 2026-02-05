@@ -1,13 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException
-from config import settings
-from models import MessageResponse, MessageRequest
-from auth import verify_api_key
-from session import SessionStore
+from app.config import settings
+from app.models import MessageResponse, MessageRequest
+from app.auth import verify_api_key
+from app.session import SessionStore
+from app.scam_detector import ScamDetector
 from agent.prompts import build_prompt
 from agent.llm_client import LLMClient
 from agent.state_management import AgentStateMachine
 from agent.intelligence_extractor import IntelligenceExtractor
-from scam_detector import ScamDetector
 
 app = FastAPI(title="Agentic HoneyPot Detection")
 
