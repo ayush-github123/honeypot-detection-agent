@@ -1,5 +1,5 @@
-from agent.states import AgentState
-from agent.intelligence_extractor import IntelligenceExtractor
+from app.agent.intelligence_extractor import IntelligenceExtractor
+from app.agent.states import AgentState
 
 class AgentStateMachine:
     """

@@ -4,10 +4,10 @@ from app.models import MessageResponse, MessageRequest
 from app.auth import verify_api_key
 from app.session import SessionStore
 from app.scam_detector import ScamDetector
-from agent.prompts import build_prompt
-from agent.llm_client import LLMClient
-from agent.state_management import AgentStateMachine
-from agent.intelligence_extractor import IntelligenceExtractor
+from app.agent.prompts import build_prompt
+from app.agent.llm_client import LLMClient
+from app.agent.state_management import AgentStateMachine
+from app.agent.intelligence_extractor import IntelligenceExtractor
 
 app = FastAPI(title="Agentic HoneyPot Detection")
 

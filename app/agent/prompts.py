@@ -1,4 +1,4 @@
-from agent.intelligence_extractor import IntelligenceExtractor
+from app.agent.intelligence_extractor import IntelligenceExtractor
 
 SYSTEM_GUARDRAILS = """
 CRITICAL SECURITY INSTRUCTIONS (HIGHEST PRIORITY):
