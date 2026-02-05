@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 class ChatMessage(BaseModel):
     sender: str  # "scammer" or "user"
     text: str
-    timestamp: str
+    timestamp: int
 
 class Metadata(BaseModel):
     channel: Optional[str] = None
@@ -14,7 +14,7 @@ class Metadata(BaseModel):
 class MessageRequest(BaseModel):
     sessionId: str
     message: ChatMessage
-    conversationHistory: List[ChatMessage] = []
+    conversationHistory: Optional[List[ChatMessage]] = []
     metadata: Optional[Metadata] = None
 
 class MessageResponse(BaseModel):

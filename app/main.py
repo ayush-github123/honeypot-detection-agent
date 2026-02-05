@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from app.config import settings
+import time
 from app.models import MessageResponse, MessageRequest
 from app.auth import verify_api_key
 from app.session import SessionStore
@@ -76,7 +77,8 @@ def recieve_message(payload: MessageRequest, api_key: str = Depends(verify_api_k
     session["conversation"].append({
         "sender": "assistant",
         "text": reply,
-        "timestamp": "now"
+        "timestamp": int(time.time() * 1000)
+        # "timestamp": "now"
     })
     
     #Calculate metrics
@@ -95,11 +97,15 @@ def recieve_message(payload: MessageRequest, api_key: str = Depends(verify_api_k
         print(f"Intelligence formatting error: {str(e)}")
         formatted_intel = {}
     
+    # return MessageResponse(
+    #     status="success",
+    #     reply=reply,
+    #     scam_detected=session.get("scam_detected", False),
+    #     intelligence=formatted_intel,
+    #     completeness_score=round(completeness, 2),
+    #     turn_count=len(session["conversation"]) // 2
+    # )
     return MessageResponse(
-        status="success",
-        reply=reply,
-        scam_detected=session.get("scam_detected", False),
-        intelligence=formatted_intel,
-        completeness_score=round(completeness, 2),
-        turn_count=len(session["conversation"]) // 2
-    )
+    status="success",
+    reply=reply
+)
