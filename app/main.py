@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from app.config import settings
+import random
 import time
 from app.models import MessageResponse, MessageRequest
 from app.auth import verify_api_key
@@ -15,6 +16,18 @@ app = FastAPI(title="Agentic HoneyPot Detection")
 sessionStore = SessionStore()
 state_machine = AgentStateMachine()
 llm = LLMClient()
+
+
+TERMINATION_RESPONSES = [
+    "Okay, I understand.",
+    "Alright, thanks for the information.",
+    "Noted, I'll check on that.",
+    "Got it, thanks for letting me know.",
+    "Okay, I will look into this."
+]
+
+
+
 
 @app.post("/message", response_model=MessageResponse)
 def recieve_message(payload: MessageRequest, api_key: str = Depends(verify_api_key)):
@@ -71,7 +84,9 @@ def recieve_message(payload: MessageRequest, api_key: str = Depends(verify_api_k
             # Fallback response
             reply = "Can you explain what this is about?"
     else:
-        reply = "Okay, got it. Thanks!"
+        # reply = "Okay, got it. Thanks!"
+        reply = random.choice(TERMINATION_RESPONSES)
+
     
     # Save response
     session["conversation"].append({
