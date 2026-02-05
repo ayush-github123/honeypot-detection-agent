@@ -10,6 +10,7 @@ from app.agent.prompts import build_prompt
 from app.agent.llm_client import LLMClient
 from app.agent.state_management import AgentStateMachine
 from app.agent.intelligence_extractor import IntelligenceExtractor
+from app.callback import send_final_result
 
 app = FastAPI(title="Agentic HoneyPot Detection")
 
@@ -27,17 +28,21 @@ TERMINATION_RESPONSES = [
 ]
 
 
-
-
 @app.post("/message", response_model=MessageResponse)
 def recieve_message(payload: MessageRequest, api_key: str = Depends(verify_api_key)):
     session = sessionStore.get_or_create(payload.sessionId)
     
     # Merge history + new message
-    if payload.conversationHistory:
+    # if payload.conversationHistory:
+    #     session["conversation"] = [
+    #         msg.model_dump() for msg in payload.conversationHistory
+    #     ]
+
+    if payload.conversationHistory and not session["conversation"]:
         session["conversation"] = [
             msg.model_dump() for msg in payload.conversationHistory
         ]
+
     
     msg = payload.message.model_dump()
     session["conversation"].append(msg)
@@ -50,10 +55,9 @@ def recieve_message(payload: MessageRequest, api_key: str = Depends(verify_api_k
             session["scam_confidence"] = max(session.get("scam_confidence", 0.0), confidence)
     except Exception as e:
         print(f"Scam detection error: {str(e)}")
-        # Don't fail the request, just log and continue
         pass
     
-    #INTELLIGENCE EXTRACTION
+    # INTELLIGENCE EXTRACTION
     try:
         new_intel = IntelligenceExtractor.extract_from_message(payload.message.text)
         if new_intel:
@@ -84,43 +88,31 @@ def recieve_message(payload: MessageRequest, api_key: str = Depends(verify_api_k
             # Fallback response
             reply = "Can you explain what this is about?"
     else:
-        # reply = "Okay, got it. Thanks!"
         reply = random.choice(TERMINATION_RESPONSES)
 
+
+    if state == "TERMINATED" and not session.get("callback_sent", False):
+        try:
+            # success = send_final_result(payload.sessionId, session)
+            # if success:
+            #     session["callback_sent"] = True
+            send_final_result(payload.sessionId, session)
+            session["callback_sent"] = True
+            print(f"[Main] Callback marked as sent for session {payload.sessionId}")
+        except Exception as e:
+            # Never let callback errors crash the endpoint
+            print(f"[Main] Callback execution error: {str(e)}")
+    
     
     # Save response
     session["conversation"].append({
         "sender": "assistant",
         "text": reply,
         "timestamp": int(time.time() * 1000)
-        # "timestamp": "now"
     })
     
-    #Calculate metrics
-    try:
-        completeness = IntelligenceExtractor.calculate_completeness_score(
-            session.get("intelligence", {})
-        )
-    except Exception as e:
-        print(f"Completeness calculation error: {str(e)}")
-        completeness = 0.0
-    
-    # Format intelligence for output
-    try:
-        formatted_intel = IntelligenceExtractor.format_for_output(session.get("intelligence", {}))
-    except Exception as e:
-        print(f"Intelligence formatting error: {str(e)}")
-        formatted_intel = {}
-    
-    # return MessageResponse(
-    #     status="success",
-    #     reply=reply,
-    #     scam_detected=session.get("scam_detected", False),
-    #     intelligence=formatted_intel,
-    #     completeness_score=round(completeness, 2),
-    #     turn_count=len(session["conversation"]) // 2
-    # )
+    # Return response (unchanged format)
     return MessageResponse(
-    status="success",
-    reply=reply
-)
+        status="success",
+        reply=reply
+    )
