@@ -1,17 +1,12 @@
 import requests
+import os
 from typing import Dict, Optional
 from app.agent.intelligence_extractor import IntelligenceExtractor
 
 
 def generate_agent_notes(session: dict) -> str:
     """
-    Generate human-readable summary of agent's interaction with scammer.
-    
-    Args:
-        session: Session dictionary containing conversation and intelligence data
-        
-    Returns:
-        Formatted string summarizing the engagement
+    Generate human-readable summary of agent's interaction with scammer
     """
     scam_detected = session.get("scam_detected", False)
     confidence = session.get("scam_confidence", 0.0)
@@ -30,14 +25,18 @@ def generate_agent_notes(session: dict) -> str:
     
     # Summarize extracted intelligence
     intel_summary = []
-    if intelligence.get("bank_accounts"):
-        intel_summary.append(f"{len(intelligence['bank_accounts'])} bank account(s)")
-    if intelligence.get("upi_ids"):
-        intel_summary.append(f"{len(intelligence['upi_ids'])} UPI ID(s)")
-    if intelligence.get("urls"):
-        intel_summary.append(f"{len(intelligence['urls'])} phishing link(s)")
-    if intelligence.get("phone_numbers"):
-        intel_summary.append(f"{len(intelligence['phone_numbers'])} phone number(s)")
+    if intelligence.get("bank_account"):
+        intel_summary.append(f"{len(intelligence['bank_account'])} bank account(s)")
+
+    if intelligence.get("upi_id"):
+        intel_summary.append(f"{len(intelligence['upi_id'])} UPI ID(s)")
+
+    if intelligence.get("url"):
+        intel_summary.append(f"{len(intelligence['url'])} phishing link(s)")
+
+    if intelligence.get("phone_number"):
+        intel_summary.append(f"{len(intelligence['phone_number'])} phone number(s)")
+
     
     if intel_summary:
         notes_parts.append(f"Successfully extracted: {', '.join(intel_summary)}.")
@@ -52,19 +51,14 @@ def send_final_result(session_id: str, session: dict) -> bool:
     Send final extracted intelligence to GUVI hackathon endpoint.
     
     This function is called once per session when the agent reaches TERMINATED state.
-    
-    Args:
-        session_id: Unique session identifier
-        session: Complete session dictionary with conversation and intelligence
-        
-    Returns:
-        True if callback succeeded, False otherwise
     """
     # Format intelligence using existing extractor
     try:
         formatted_intel = IntelligenceExtractor.format_for_output(
             session.get("intelligence", {})
         )
+        # print(session["intelligence"], "\n")  #DEBUG
+        print(f"\n{formatted_intel}\n") #DEBUG
     except Exception as e:
         print(f"[GUVI Callback] Intelligence formatting error: {str(e)}")
         formatted_intel = {
@@ -91,17 +85,29 @@ def send_final_result(session_id: str, session: dict) -> bool:
         "scamDetected": session.get("scam_detected", False),
         "totalMessagesExchanged": total_messages,
         "extractedIntelligence": {
-            "bankAccounts": formatted_intel.get("bankAccounts", []),
-            "upiIds": formatted_intel.get("upiIds", []),
-            "phishingLinks": formatted_intel.get("phishingLinks", []),
-            "phoneNumbers": formatted_intel.get("phoneNumbers", []),
-            "suspiciousKeywords": formatted_intel.get("suspiciousKeywords", [])
+            "bankAccounts": [
+                item["value"]
+                for item in session.get("intelligence", {}).get("bank_account", [])
+            ],
+            "upiIds": [
+                item["value"]
+                for item in session.get("intelligence", {}).get("upi_id", [])
+            ],
+            "phishingLinks": [
+                item["value"]
+                for item in session.get("intelligence", {}).get("url", [])
+            ],
+            "phoneNumbers": [
+                item["value"]
+                for item in session.get("intelligence", {}).get("phone_number", [])
+            ],
+            "suspiciousKeywords": formatted_intel.get("suspicious_keywords", [])
+
         },
         "agentNotes": agent_notes
     }
-    
-    # Send POST request to hackathon endpoint
-    callback_url = "https://hackathon.guvi.in/api/updateHoneyPotFinalResult"
+
+    callback_url = os.environ.get("HONEY_POT_CALLBACK_URL")
     
     try:
         print(f"[GUVI Callback] Sending final result for session {session_id}")
