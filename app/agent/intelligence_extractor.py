@@ -10,7 +10,7 @@ class IntelligenceExtractor:
     # Regex patterns for entity extraction
     PATTERNS = {
         "upi_id": r'\b[a-zA-Z0-9.\-_]{2,}@[a-zA-Z0-9]{2,}\b',
-        "phone": r'\b(?:\+91|0)?[6-9]\d{9}\b',
+        "phone": r'\b(?:\+?\d{1,3}[-\s]?)?\d{10}\b',
         "bank_account": r'\b\d{9,18}\b',
         "ifsc": r'\b[A-Z]{4}0[A-Z0-9]{6}\b',
         "url": r'https?://[^\s]+',
@@ -18,6 +18,26 @@ class IntelligenceExtractor:
         "email": r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b',
         "amount": r'(?:Rs\.?|₹|INR|rupees?)\s*(\d+(?:,\d+)*(?:\.\d{2})?)',
     }
+
+    SUSPICIOUS_KEYWORDS = [
+        "urgent",
+        "verify now",
+        "account blocked",
+        "account will be blocked",
+        "otp",
+        "upi pin",
+        "send otp",
+        "immediately",
+        "within minutes",
+        "fraud team",
+        "security team",
+        "limited time",
+        "suspend",
+        "blocked",
+        "transfer now",
+        "pay now"
+    ]
+
     
     INTELLIGENCE_CATEGORIES = [
         "upi_id",
@@ -27,7 +47,8 @@ class IntelligenceExtractor:
         "phone",
         "crypto_wallet",
         "email",
-        "amount"
+        "amount",
+        "suspicious_keywords"
     ]
     
     @staticmethod
@@ -60,7 +81,25 @@ class IntelligenceExtractor:
             except Exception as e:
                 print(f"Error extracting {category}: {str(e)}")
                 continue
-        
+
+        text_lower = text.lower()
+        found_keywords = []
+
+        for keyword in IntelligenceExtractor.SUSPICIOUS_KEYWORDS:
+            if keyword in text_lower:
+                found_keywords.append(keyword)
+
+        if found_keywords:
+            findings["suspicious_keywords"] = [
+                {
+                    "value": kw,
+                    "confidence": 0.9,  # High confidence: explicit scam language
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "source_text": text[:100]
+                }
+                for kw in set(found_keywords)
+            ]
+
         return findings
     
     @staticmethod
@@ -181,6 +220,7 @@ class IntelligenceExtractor:
             "url": 0.20,
             "phone": 0.15,
             "ifsc": 0.10,
+            "suspicious_keywords": 0.02,
             "amount": 0.03,
             "email": 0.02,
         }
