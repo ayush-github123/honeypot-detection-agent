@@ -65,6 +65,11 @@ class IntelligenceExtractor:
         for category, pattern in IntelligenceExtractor.PATTERNS.items():
             try:
                 matches = re.findall(pattern, text, re.IGNORECASE)
+                if category == "bank_account":
+                    matches = [
+                        m for m in matches
+                        if not re.fullmatch(r'(?:\+?\d{1,3}[-\s]?)?\d{10}', m)
+                    ]
                 if matches:
                     unique_matches = list(set([m for m in matches if m and str(m).strip()]))     # Remove duplicates and empty matches
                     
@@ -82,18 +87,20 @@ class IntelligenceExtractor:
                 print(f"Error extracting {category}: {str(e)}")
                 continue
 
-        text_lower = text.lower()
         found_keywords = []
+        text_lower = text.lower()
 
-        for keyword in IntelligenceExtractor.SUSPICIOUS_KEYWORDS:
+        # Sort keywords by length
+        for keyword in sorted(IntelligenceExtractor.SUSPICIOUS_KEYWORDS, key=len, reverse=True):
             if keyword in text_lower:
                 found_keywords.append(keyword)
+                text_lower = text_lower.replace(keyword, "")  # prevent sub-match
 
         if found_keywords:
             findings["suspicious_keywords"] = [
                 {
                     "value": kw,
-                    "confidence": 0.9,  # High confidence: explicit scam language
+                    "confidence": 0.6, 
                     "timestamp": datetime.utcnow().isoformat(),
                     "source_text": text[:100]
                 }
@@ -136,7 +143,10 @@ class IntelligenceExtractor:
             
             # Phone validation
             elif category == "phone":
-                if len(value) == 10 or (value.startswith('+91') and len(value) == 13):
+                # if len(value) == 10 or (value.startswith('+91') and len(value) == 13):
+                #     confidence = 0.9
+                digits = re.sub(r"\D", "", value)
+                if 10 <= len(digits) <= 13:
                     confidence = 0.9
             
             # IFSC validation

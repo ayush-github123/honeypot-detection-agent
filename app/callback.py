@@ -34,8 +34,8 @@ def generate_agent_notes(session: dict) -> str:
     if intelligence.get("url"):
         intel_summary.append(f"{len(intelligence['url'])} phishing link(s)")
 
-    if intelligence.get("phone_number"):
-        intel_summary.append(f"{len(intelligence['phone_number'])} phone number(s)")
+    if intelligence.get("phone"):
+        intel_summary.append(f"{len(intelligence['phone'])} phone number(s)")
 
     
     if intel_summary:
@@ -99,9 +99,14 @@ def send_final_result(session_id: str, session: dict) -> bool:
             ],
             "phoneNumbers": [
                 item["value"]
-                for item in session.get("intelligence", {}).get("phone_number", [])
+                for item in session.get("intelligence", {}).get("phone", [])
             ],
-            "suspiciousKeywords": formatted_intel.get("suspicious_keywords", [])
+            # "suspiciousKeywords": formatted_intel.get("suspicious_keywords", [])
+            "suspiciousKeywords": [
+                    item["value"]
+                    for item in session.get("intelligence", {}).get("suspicious_keywords", [])
+            ]
+
 
         },
         "agentNotes": agent_notes
