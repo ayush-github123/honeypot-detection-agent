@@ -105,6 +105,7 @@ def send_final_result(session_id: str, session: dict) -> bool:
     
     try:
         print(f"[GUVI Callback] Sending final result for session {session_id}")
+        print("Data sent: ", payload)
         response = requests.post(
             callback_url,
             json=payload,
