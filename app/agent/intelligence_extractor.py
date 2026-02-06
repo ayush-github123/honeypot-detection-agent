@@ -220,7 +220,7 @@ class IntelligenceExtractor:
             "url": 0.20,
             "phone": 0.15,
             "ifsc": 0.10,
-            "suspicious_keywords": 0.02,
+            "suspicious_keywords": 0.05,
             "amount": 0.03,
             "email": 0.02,
         }

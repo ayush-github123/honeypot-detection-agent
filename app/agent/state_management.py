@@ -31,13 +31,13 @@ class AgentStateMachine:
         if completeness >= self.INTELLIGENCE_COMPLETENESS_THRESHOLD:
             return AgentState.TERMINATED
 
-        #IF Scam confirmed + minimum engagement done (GUVI-safe)
-        if (
-            session.get("scam_detected")
-            and scam_confidence >= self.HIGH_SCAM_CONFIDENCE
-            and turn_count >= self.MIN_TURNS_FOR_TERMINATION
-        ):
-            return AgentState.TERMINATED
+        #IF Scam confirmed + minimum engagement done
+        # if (
+        #     session.get("scam_detected")
+        #     and scam_confidence >= self.HIGH_SCAM_CONFIDENCE
+        #     and turn_count >= self.MIN_TURNS_FOR_TERMINATION
+        # ):
+        #     return AgentState.TERMINATED
 
         #IF Scam confirmed + stagnation (no new intel recently)
         if session.get("scam_detected") and turn_count >= self.MIN_TURNS_FOR_TERMINATION:
@@ -48,6 +48,19 @@ class AgentStateMachine:
         #IF Hard safety cap
         if turn_count >= self.MAX_TURNS_EXTRACTING:
             return AgentState.TERMINATED
+
+        # EARLY TERMINATION
+        if session["scam_detected"]:
+            intelligence = session.get("intelligence", {})
+
+            critical_intel_found = any(
+                key in intelligence and intelligence[key]
+                for key in ["upi_id", "bank_account", "phone", "url"]
+            )
+
+            # At least 5 turns to avoid 1-shot termination
+            if critical_intel_found and turn_count >= 6:
+                return AgentState.TERMINATED
 
     
         if not session.get("scam_detected"):
