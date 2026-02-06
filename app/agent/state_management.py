@@ -1,5 +1,6 @@
 from app.agent.intelligence_extractor import IntelligenceExtractor
 from app.agent.states import AgentState
+import os
 
 class AgentStateMachine:
     """
@@ -7,7 +8,7 @@ class AgentStateMachine:
     """
 
     HIGH_SCAM_CONFIDENCE = 0.7
-    INTELLIGENCE_COMPLETENESS_THRESHOLD = 0.55
+    INTELLIGENCE_COMPLETENESS_THRESHOLD = os.environ.get("INTELLIGENCE_COMPLETENESS_THRESHOLD", 0.5)
     MAX_TURNS_EXTRACTING = 12
     MIN_TURNS_FOR_TERMINATION = 5       # Minimum turns to justify a final report
     STAGNATION_TURNS = 2                # How many turns without new intel = stagnation
