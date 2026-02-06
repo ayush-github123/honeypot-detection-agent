@@ -58,8 +58,8 @@ class AgentStateMachine:
                 for key in ["upi_id", "bank_account", "phone", "url"]
             )
 
-            # At least 5 turns to avoid 1-shot termination
-            if critical_intel_found and turn_count >= 6:
+            # least turns to avoid 1-shot termination
+            if critical_intel_found and turn_count >= 8:
                 return AgentState.TERMINATED
 
     
